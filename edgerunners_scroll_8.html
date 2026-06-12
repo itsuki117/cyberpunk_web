@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDGERUNNERS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,800;0,900;1,900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{color-scheme:light;--y:#fbfb00;--k:#111;--r:#e01a18;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--k);
+  font-family:'Barlow Condensed',sans-serif;user-select:none;}
+
+/* ── TOPBAR ── */
+#topbar{position:fixed;top:28px;left:36px;display:flex;align-items:center;gap:10px;z-index:300;}
+#topbar .bar{width:3px;height:18px;background:var(--r);}
+#topbar .brand{font-family:'Barlow',sans-serif;font-size:13px;font-weight:500;color:var(--k);letter-spacing:.04em;}
+
+/* ── DOTS ── */
+#dots{position:fixed;right:24px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:300;}
+.dot{width:6px;height:6px;border-radius:50%;background:rgba(17,17,17,.2);cursor:pointer;transition:all .18s;}
+.dot.on{background:var(--k);transform:scale(1.6);}
+
+/* ── SCROLL HINT ── */
+#hint{position:fixed;bottom:82px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:6px;z-index:200;
+  opacity:0;transition:opacity .5s;pointer-events:none;}
+#hint span{font-family:'Barlow',sans-serif;font-size:10px;font-weight:500;
+  letter-spacing:.2em;color:rgba(17,17,17,.4);text-transform:uppercase;}
+.arr{width:1px;height:28px;background:rgba(17,17,17,.25);position:relative;overflow:hidden;}
+.arr::after{content:'';position:absolute;top:-100%;left:0;width:100%;height:100%;
+  background:var(--k);animation:adrop 2s ease-in-out infinite 1.5s;}
+@keyframes adrop{0%{top:-100%;}100%{top:100%;}}
+
+/* ━━━━━━━━━━━━━━━━━━━━━
+   PANELS — стековая система
+   패널들을 z-index로 쌓고 visibility로 제어
+━━━━━━━━━━━━━━━━━━━━━ */
+.panel{
+  position:fixed;inset:0;
+  background:var(--y);
+  overflow:hidden;
+  /* 非表示パネルは pointer-events を切る */
+  visibility:hidden;
+  pointer-events:none;
+}
+.panel.active{visibility:visible;pointer-events:auto;}
+
+/* ── GROUND ── */
+.gnd{position:absolute;bottom:0;left:0;right:0;height:68px;background:var(--k);z-index:10;}
+.gnd::before{content:'';position:absolute;bottom:100%;left:0;right:0;height:30px;background:var(--k);
+  clip-path:polygon(0 100%,0 55%,3% 40%,7% 30%,11% 28%,15% 20%,19% 18%,23% 22%,27% 18%,31% 15%,37% 20%,42% 18%,46% 26%,50% 55%,53% 62%,56% 55%,60% 58%,65% 52%,69% 55%,73% 50%,77% 53%,82% 49%,87% 52%,91% 50%,95% 53%,98% 56%,100% 58%,100% 100%);}
+
+
+/* ── TYPOGRAPHY BASE ── */
+.kicker{font-family:'Barlow',sans-serif;font-size:clamp(13px,1.4vw,16px);font-weight:500;
+  color:var(--k);letter-spacing:.03em;margin-bottom:4px;}
+.big{font-weight:900;font-size:clamp(68px,12.5vw,152px);
+  line-height:.88;color:var(--k);text-transform:uppercase;letter-spacing:-.01em;}
+
+/* ── TEXT FLASH (文字のみ) ── */
+@keyframes txtFlash{
+  0%,100%{color:var(--k);}
+  25%,75%{color:var(--y);-webkit-text-stroke:2px var(--k);}
+}
+.flashing{animation:txtFlash .12s steps(2) forwards;}
+
+/* ━━━━━━━━━━━━━━━━━━━━━
+   S1 HERO
+━━━━━━━━━━━━━━━━━━━━━ */
+#s1 .wrap{position:absolute;left:36px;top:50%;transform:translateY(-50%);z-index:5;}
+.eyebrow{font-family:'Barlow',sans-serif;font-size:clamp(13px,1.4vw,16px);font-weight:500;
+  color:var(--k);letter-spacing:.02em;margin-bottom:6px;}
+/* 各行を overflow:hidden でクリップ → translateY で制御 */
+.hl-clip{overflow:hidden;}
+.hl-inner{display:block;font-weight:900;font-size:clamp(72px,13vw,158px);
+  line-height:.88;color:var(--k);text-transform:uppercase;letter-spacing:-.01em;}
+.sub-txt{font-family:'Barlow',sans-serif;font-size:clamp(13px,1.4vw,16px);font-weight:400;
+  color:var(--k);letter-spacing:.02em;margin-top:18px;line-height:1.5;}
+.cta-row{margin-top:28px;display:flex;align-items:center;gap:20px;}
+.btn{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--y);background:var(--k);
+  border:none;padding:13px 36px;cursor:pointer;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+  transition:background .12s;}
+.btn:hover{background:#333;}
+.btn2{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--k);
+  background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+
+/* ━━━━━━━━━━━━━━━━━━━━━
+   S2 MARQUEE
+━━━━━━━━━━━━━━━━━━━━━ */
+#s2 .wrap{position:absolute;left:36px;top:50%;transform:translateY(-50%);z-index:5;right:100px;}
+#s2-track{display:flex;white-space:nowrap;align-items:baseline;overflow:visible;}
+#s2-track span{font-weight:900;font-size:clamp(68px,12.5vw,152px);
+  line-height:.88;color:var(--k);text-transform:uppercase;letter-spacing:-.01em;
+  padding-right:.3em;flex-shrink:0;}
+.s2-name-clip{overflow:hidden;}
+.s2-name-inner{display:block;font-weight:900;font-size:clamp(68px,12.5vw,152px);
+  line-height:.88;color:var(--k);text-transform:uppercase;letter-spacing:-.01em;}
+
+/* ━━━━━━━━━━━━━━━━━━━━━
+   S3 CREDITS
+━━━━━━━━━━━━━━━━━━━━━ */
+#s3 .wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:5;}
+.blk{margin-bottom:20px;}.blk:last-child{margin-bottom:0;}
+.names{font-weight:900;font-size:clamp(28px,4.8vw,58px);line-height:.92;
+  color:var(--k);text-transform:uppercase;letter-spacing:-.005em;}
+
+/* ━━━━━━━━━━━━━━━━━━━━━
+   S4 STAMP
+━━━━━━━━━━━━━━━━━━━━━ */
+#s4 .wrap{position:absolute;left:36px;top:50%;transform:translateY(-50%);z-index:5;}
+#s4 .stamp-clip{overflow:hidden;}/* ← クリップで stamp が外に出ない */
+#s4 .stamp-txt{display:block;font-weight:900;font-size:clamp(68px,12.5vw,152px);
+  line-height:.88;color:var(--k);text-transform:uppercase;letter-spacing:-.01em;}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━
+   S5 OUTLINE FLYTHROUGH
+━━━━━━━━━━━━━━━━━━━━━ */
+#s5{overflow:hidden;}
+#s5-outline{position:absolute;white-space:nowrap;top:50%;
+  font-weight:900;font-style:italic;font-size:clamp(220px,38vw,460px);
+  line-height:.8;color:transparent;-webkit-text-stroke:3px var(--k);
+  text-transform:uppercase;letter-spacing:-.02em;z-index:3;pointer-events:none;}
+#s5 .wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:5;pointer-events:none;}
+.ttl{font-weight:900;font-size:clamp(80px,15vw,190px);line-height:.85;
+  color:var(--k);text-transform:uppercase;letter-spacing:-.02em;text-align:center;}
+.ttl-sub{font-family:'Barlow',sans-serif;font-size:clamp(12px,1.2vw,15px);font-weight:500;
+  color:var(--k);letter-spacing:.18em;text-transform:uppercase;text-align:center;margin-top:14px;}
+
+</style>
+</head>
+<body>
+
+<div id="topbar"><div class="bar"></div><div class="brand">CYBERPUNK : EDGERUNNERS</div></div>
+<div id="dots"></div>
+<div id="hint"><span>Scroll</span><div class="arr"></div></div>
+
+
+<!-- ── S1 HERO ── -->
+<section class="panel active" id="s1">
+  <div class="wrap">
+    <div class="eyebrow" id="s1-ey">original anime series</div>
+    <div class="hl-clip"><span class="hl-inner" id="s1-l1">LIVE</span></div>
+    <div class="hl-clip"><span class="hl-inner" id="s1-l2">ON THE</span></div>
+    <div class="hl-clip"><span class="hl-inner" id="s1-l3">EDGE</span></div>
+    <p class="sub-txt" id="s1-sub">Night City, 2077.<br>Die a legend or burn trying.</p>
+    <div class="cta-row" id="s1-cta">
+      <button class="btn">Watch Now</button>
+      <button class="btn2">See All Episodes →</button>
+    </div>
+  </div>
+  <div class="gnd"></div>
+</section>
+
+<!-- ── S2 MARQUEE ── -->
+<section class="panel" id="s2">
+  <div class="wrap">
+    <div class="kicker">based on</div>
+    <div id="s2-track"><!-- filled by JS --></div>
+    <div class="kicker" id="s2-k2" style="margin-top:16px">set in a<br>universe created by</div>
+    <div class="s2-name-clip"><span class="s2-name-inner" id="s2-mike">MIKE</span></div>
+    <div class="s2-name-clip"><span class="s2-name-inner" id="s2-pond">PONDSMITH</span></div>
+  </div>
+  <div class="gnd"></div>
+</section>
+
+<!-- ── S3 CREDITS ── -->
+<section class="panel" id="s3">
+  <div class="wrap" id="s3-wrap">
+    <div class="blk"><div class="kicker">Executive producers</div>
+      <div class="names" id="s3a">RAFAŁ JAKI<br>DYLAN THOMAS<br>TAIKI SAKURAI<br>YOSHIKI USA</div></div>
+    <div class="blk"><div class="kicker">Producers</div>
+      <div class="names" id="s3b">SAYA ELDER<br>BARTOSZ SZTYBOR<br>SATORU HOMMA</div></div>
+    <div class="blk"><div class="kicker">Animation producers</div>
+      <div class="names" id="s3c">SHUNSUKE SHIDA<br>NAOKO TSUTSUMI</div></div>
+  </div>
+  <div class="gnd"></div>
+</section>
+
+<!-- ── S4 STAMP ── -->
+<section class="panel" id="s4">
+  <div class="wrap">
+    <div class="kicker" id="s4-k">Screen story by</div>
+    <div class="stamp-clip"><span class="stamp-txt" id="s4-a">BARTOSZ</span></div>
+    <div class="stamp-clip"><span class="stamp-txt" id="s4-b">SZTYBOR</span></div>
+  </div>
+  <div class="gnd"></div>
+</section>
+
+<!-- ── S5 TITLE FLYTHROUGH ── -->
+<section class="panel" id="s5">
+  <div id="s5-outline">EDGERUNNERS&nbsp;&nbsp;EDGERUNNERS&nbsp;&nbsp;EDGERUNNERS&nbsp;&nbsp;</div>
+  <div class="wrap">
+    <div class="hl-clip"><span class="hl-inner ttl" id="s5-a">EDGE</span></div>
+    <div class="hl-clip"><span class="hl-inner ttl" id="s5-b">RUNNERS</span></div>
+    <div class="ttl-sub" id="s5-sub">CYBERPUNK : EDGERUNNERS — NOW STREAMING</div>
+  </div>
+  <div class="gnd"></div>
+</section>
+
+<script>
+/* ── イージング ── */
+const eOut = t => t===1?1:1-Math.pow(2,-10*t);
+const eIn  = t => t===0?0:Math.pow(2, 10*t-10);
+
+/* ── CSS transition ベースの軽量アニメーター ──
+   transform/opacity を CSS transition で動かす。
+   DOMMatrix を読まないので初期値の干渉ゼロ。       */
+function css(el, props, dur, delay, ease, done){
+  const easeCss = ease===eOut
+    ? 'cubic-bezier(0.16,1,0.3,1)'
+    : ease===eIn
+    ? 'cubic-bezier(0.7,0,0.84,0)'
+    : 'linear';
+
+  // 既存の transition を即座にキャンセルしてから from をセット
+  el.style.transition = 'none';
+  el.style.animation  = 'none';
+  if(props.from){
+    const f = props.from;
+    el.style.transform = buildTf(f);
+    if(f.o !== undefined) el.style.opacity = String(f.o);
+  }
+  // 強制reflow: getComputedStyle は offsetHeight より確実
+  void getComputedStyle(el).transform;
+
+  // then animate to target
+  setTimeout(()=>{
+    el.style.transition = `transform ${dur}ms ${easeCss}, opacity ${dur}ms ${easeCss}`;
+    el.style.animation  = '';
+    el.style.transform = buildTf(props.to||props);
+    const toO = (props.to||props).o;
+    if(toO !== undefined) el.style.opacity = String(toO);
+    if(done) setTimeout(done, dur);
+  }, delay);
+}
+
+function buildTf(p){
+  const fmtX  = p.x  !== undefined ? p.x  : 0;
+  const fmtY  = p.y  !== undefined ? p.y  : 0;
+  const fmtSk = p.sk !== undefined ? p.sk : 0;
+  // パーセント文字列はそのまま、数値はpxを付ける
+  const tx = typeof fmtX  === 'string' ? `translateX(${fmtX})`     : `translateX(${fmtX}px)`;
+  const ty = typeof fmtY  === 'string' ? `translateY(${fmtY})`     : `translateY(${fmtY}px)`;
+  const sk = typeof fmtSk === 'string' ? `skewX(${fmtSk})`         : `skewX(${fmtSk}deg)`;
+  return `${tx} ${ty} ${sk}`;
+}
+
+/* ── テキストフラッシュ（文字だけ） ── */
+function flash(els, delay=0){
+  setTimeout(()=>{
+    els.forEach(el=>{
+      el.classList.remove('flashing');
+      void el.offsetWidth;
+      el.classList.add('flashing');
+      el.addEventListener('animationend',()=>el.classList.remove('flashing'),{once:true});
+    });
+  }, delay);
+}
+
+/* ── パネル管理 ── */
+const panels = Array.from(document.querySelectorAll('.panel'));
+const N = panels.length;
+let cur=0, busy=false;
+
+
+// ドット生成
+const dotWrap = document.getElementById('dots');
+panels.forEach((_,i)=>{
+  const d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  d.addEventListener('click',()=>go(i));
+  dotWrap.appendChild(d);
+});
+function setDot(i){ dotWrap.querySelectorAll('.dot').forEach((d,j)=>d.classList.toggle('on',j===i)); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━
+   各セクション入場アニメーション
+━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+function s1Enter(dir=1){
+  const ey   = document.getElementById('s1-ey');
+  const l1   = document.getElementById('s1-l1');
+  const l2   = document.getElementById('s1-l2');
+  const l3   = document.getElementById('s1-l3');
+  const sub  = document.getElementById('s1-sub');
+  const cta  = document.getElementById('s1-cta');
+
+  // eyebrow & sub & cta: dir>0なら下から、dir<0なら上から
+  const yFrom = dir>0 ? 14 : -14;
+  [ey,sub,cta].forEach((el,i)=>{
+    css(el,{from:{y:yFrom,o:0},to:{y:0,o:1}}, 500, 60+i*200, eOut);
+  });
+  // headline lines: dir>0なら下から、dir<0なら上から
+  const hlFrom = dir>0 ? '110%' : '-110%';
+  [l1,l2,l3].forEach((el,i)=>{
+    css(el,{from:{y:hlFrom},to:{y:0}}, 640, 80+i*80, eOut);
+    flash([el], 120+i*80);
+  });
+  setTimeout(()=>{ document.getElementById('hint').style.opacity='1'; }, 1300);
+}
+
+function s2Enter(dir){
+  // マーキーをリセット
+  const track = document.getElementById('s2-track');
+  track.innerHTML='';
+  for(let i=0;i<7;i++){
+    const s=document.createElement('span');
+    s.textContent='Cyberpunk 2077\u00A0\u00A0';
+    track.appendChild(s);
+  }
+
+  // 初期位置: dir方向から飛んでくる
+  const sx = dir>0 ? window.innerWidth*1.6 : -window.innerWidth*1.6;
+  // Step1: 高速で画面中央付近まで（eIn = 加速）
+  css(track,{from:{x:sx},to:{x: dir>0 ? -window.innerWidth*0.5 : window.innerWidth*0.5}},
+    200, 0, eIn, ()=>{
+    // Step2: 急ブレーキでスナップ（eOut = 減速）
+    css(track,{from:{x: dir>0 ? -window.innerWidth*0.5 : window.innerWidth*0.5},to:{x:0}},
+      460, 0, eOut);
+  });
+  flash([track], 210);
+
+  const k2   = document.getElementById('s2-k2');
+  const mike = document.getElementById('s2-mike');
+  const pond = document.getElementById('s2-pond');
+  const hlFrom = dir>0 ? '110%' : '-110%';
+  css(k2,  {from:{y:dir>0?12:-12,o:0},to:{y:0,o:1}}, 400, 340, eOut);
+  css(mike,{from:{y:hlFrom},to:{y:0}}, 600, 400, eOut);
+  css(pond,{from:{y:hlFrom},to:{y:0}}, 600, 480, eOut);
+  flash([mike,pond], 500);
+
+}
+
+function s3Enter(dir){
+  const blocks = [document.getElementById('s3a'),document.getElementById('s3b'),document.getElementById('s3c')];
+  const sx = dir>0 ? 140 : -140;
+  blocks.forEach((b,i)=>{
+    css(b,{from:{x:sx,o:0},to:{x:0,o:1}}, 520, 40+i*80, eOut);
+    flash([b], 80+i*90);
+  });
+  document.querySelectorAll('#s3 .kicker').forEach((k,i)=>{
+    css(k,{from:{x:sx*0.6,o:0},to:{x:0,o:1}}, 400, 30+i*80, eOut);
+  });
+}
+
+function s4Enter(dir){
+  const kicker = document.getElementById('s4-k');
+  const la = document.getElementById('s4-a');
+  const lb = document.getElementById('s4-b');
+
+  css(kicker,{from:{o:0},to:{o:1}}, 300, 30, eOut);
+
+  // dir>0: 下から突き上げ、dir<0: 上から落下
+  const fromY  = dir>0 ? '105%' : '-105%';
+  const overY  = dir>0 ? '-5%'  : '5%';
+  [la,lb].forEach((el,i)=>{
+    css(el,{from:{y:fromY},to:{y:overY}}, 180, i*100, eIn, ()=>{
+      css(el,{from:{y:overY},to:{y:0}}, 280, 0, eOut);
+    });
+    flash([el], i*100+190);
+  });
+
+}
+
+function s5Enter(dir){
+  const outline = document.getElementById('s5-outline');
+  const sw = window.innerWidth;
+  // outline は CSS top:50% でセンタリング済み。transform は x のみ操作する
+  // CSS の top:50% を保持しつつ transform を translateX のみに
+  outline.style.top = '50%';
+  // Step1: 右から加速しながら入ってくる
+  // dir>0: 右→左へ通過、dir<0: 左→右へ通過
+  const oStart = dir>0 ?  sw*1.4  : -sw*1.4;
+  const oMid   = dir>0 ?  sw*0.1  : -sw*0.1;
+  const oEnd   = dir>0 ? -sw*3.5  :  sw*3.5;
+  outline.style.transition = 'none';
+  outline.style.opacity = '1';
+  outline.style.transform = 'translateX(' + oStart + 'px)';
+  outline.offsetHeight;
+  setTimeout(()=>{
+    outline.style.transition = 'transform 260ms cubic-bezier(0.7,0,0.84,0)';
+    outline.style.transform = 'translateX(' + oMid + 'px)';
+    setTimeout(()=>{
+      outline.style.transition = 'transform 500ms cubic-bezier(0.7,0,0.84,0)';
+      outline.style.transform = 'translateX(' + oEnd + 'px)';
+    }, 260);
+  }, 0);
+
+  // タイトル文字は outline が通り過ぎた後に登場
+  const sa = document.getElementById('s5-a');
+  const sb = document.getElementById('s5-b');
+  const ss = document.getElementById('s5-sub');
+
+  const ttlFrom = dir>0 ? '110%' : '-110%';
+  css(sa,{from:{y:ttlFrom},to:{y:0}}, 640, 340, eOut);
+  css(sb,{from:{y:ttlFrom},to:{y:0}}, 640, 420, eOut);
+  css(ss,{from:{o:0},to:{o:1}}, 500, 880, eOut);
+  flash([sa,sb], 520);
+
+}
+
+/* ── 退場 ── */
+function exitPanel(panelEl, dir){
+  const directItems = panelEl.querySelectorAll('.wrap > *');
+  directItems.forEach(el=>{
+    el.style.transition = 'opacity 200ms cubic-bezier(0.7,0,0.84,0)';
+    el.style.opacity = '0';
+  });
+  panelEl.querySelectorAll('.stamp-txt, #s2-track, #s2-mike, #s2-pond, #s5-outline').forEach(el=>{
+    el.style.transition = 'opacity 200ms cubic-bezier(0.7,0,0.84,0)';
+    el.style.opacity = '0';
+  });
+}
+
+/* ── 遷移 ── */
+const ENTERS = [s1Enter,s2Enter,s3Enter,s4Enter,s5Enter];
+
+function go(next){
+  if(next===cur||busy) return;
+  busy=true;
+  const dir = next>cur?1:-1;
+  const prev = cur;
+  cur = next;
+  setDot(cur);
+  document.getElementById('hint').style.opacity = cur===0?'1':'0';
+
+  // 退場
+  exitPanel(panels[prev], dir);
+
+  setTimeout(()=>{
+    // パネルの可視性を切り替え
+    panels[prev].classList.remove('active');
+    panels[cur].classList.add('active');
+    // exitPanel で付いた opacity:0 をリセット
+    panels[cur].querySelectorAll('.wrap > *, .stamp-txt, .s2-name-inner').forEach(el=>{
+      el.style.opacity = '';
+      el.style.transition = '';
+    });
+    // 入場
+    ENTERS[cur](dir);
+    setTimeout(()=>{ busy=false; }, 860);
+  }, 230);
+}
+
+/* ── 入力 ── */
+let wBuf=0, wT;
+window.addEventListener('wheel',e=>{
+  e.preventDefault();
+  wBuf+=e.deltaY;
+  clearTimeout(wT);
+  wT=setTimeout(()=>{
+    if(wBuf>40) go(Math.min(cur+1,N-1));
+    else if(wBuf<-40) go(Math.max(cur-1,0));
+    wBuf=0;
+  },30);
+},{passive:false});
+
+let tY=0;
+window.addEventListener('touchstart',e=>{tY=e.touches[0].clientY;},{passive:true});
+window.addEventListener('touchend',e=>{
+  const dy=tY-e.changedTouches[0].clientY;
+  if(dy>50) go(Math.min(cur+1,N-1));
+  else if(dy<-50) go(Math.max(cur-1,0));
+},{passive:true});
+
+window.addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'||e.key==='ArrowRight') go(Math.min(cur+1,N-1));
+  if(e.key==='ArrowUp'  ||e.key==='ArrowLeft')  go(Math.max(cur-1,0));
+});
+
+/* ── 初期化 ── */
+setTimeout(s1Enter, 200);
+</script>
+</body>
+</html>
